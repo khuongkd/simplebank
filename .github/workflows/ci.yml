@@ -11,6 +11,25 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:12
+        # Provide the password for postgres
+        env:
+          POSTGRES_DB: simple_bank
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: secret
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
     steps:
     - uses: actions/checkout@v3
 
@@ -18,6 +37,15 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
+
+    - name: Install golang migration
+      run: |
+        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.darwin-amd64.tar.gz | tar xvz
+        sudo mv migrate /usr/local/bin
+        whichis migrate
+
+    - name: migrate up data
+      run: make migrationup
 
     - name: Test
       run: make test
