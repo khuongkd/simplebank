@@ -104,16 +104,11 @@ func TestGetAccountAPI(t *testing.T) {
 
 func TestCreateAccount(t *testing.T) {
 	account := randomAccount()
-	req := db.CreateAcountParams{
-		Owner:    account.Owner,
-		Currency: account.Currency,
-		Balance:  0,
-	}
 
 	testCases := []struct {
 		name          string
 		req           db.CreateAcountParams
-		buildStubs    func(store *mockdb.MockStore)
+		buildStubs    func(store *mockdb.MockStore, req db.CreateAcountParams)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
@@ -123,7 +118,7 @@ func TestCreateAccount(t *testing.T) {
 				Currency: account.Currency,
 				Balance:  0,
 			},
-			buildStubs: func(store *mockdb.MockStore) {
+			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
 				store.EXPECT().
 					CreateAcount(gomock.Any(), gomock.Eq(req)).
 					Times(1).
@@ -140,7 +135,7 @@ func TestCreateAccount(t *testing.T) {
 				Currency: account.Currency,
 				Balance:  0,
 			},
-			buildStubs: func(store *mockdb.MockStore) {
+			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
 				store.EXPECT().
 					CreateAcount(gomock.Any(), gomock.Eq(req)).
 					Times(1).
@@ -153,11 +148,10 @@ func TestCreateAccount(t *testing.T) {
 		{
 			name: "BadRequest",
 			req: db.CreateAcountParams{
-				Owner:    account.Owner,
 				Currency: "xyz",
 				Balance:  0,
 			},
-			buildStubs: func(store *mockdb.MockStore) {
+			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
 				store.EXPECT().
 					CreateAcount(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -175,10 +169,10 @@ func TestCreateAccount(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 
 			server := NewServer(store)
-			tc.buildStubs(store)
+			tc.buildStubs(store, tc.req)
 			recorder := httptest.NewRecorder()
 			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(req)
+			err := json.NewEncoder(&buf).Encode(tc.req)
 			require.NoError(t, err)
 
 			request, err := http.NewRequest(http.MethodPost, "/accounts", &buf)
