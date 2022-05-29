@@ -6,21 +6,26 @@ import (
 	"fmt"
 )
 
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, params CreateTransferParams) (TransferTxResult, error)
+}
+
 // Store provides all functions to execute db queries and transactions
-type Store struct {
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
 // execTx executes a function within a database transaction
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -49,7 +54,7 @@ type TransferTxResult struct {
 
 // TransferTx performs a money transfer from one account to another account
 // It create a transfer record, add account entries, and update account's balance within a single database transaction
-func (store *Store) TransferTx(ctx context.Context, params CreateTransferParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, params CreateTransferParams) (TransferTxResult, error) {
 	var result TransferTxResult
 	err := store.execTx(ctx, func(*Queries) error {
 		// create transfer
@@ -91,7 +96,7 @@ func (store *Store) TransferTx(ctx context.Context, params CreateTransferParams)
 	return result, err
 }
 
-func (store *Store) AddAccountBalanceOrder(ctx context.Context, account1ID, account2ID, amount int64) (fromAccount Account, toAccount Account, err error) {
+func (store *SQLStore) AddAccountBalanceOrder(ctx context.Context, account1ID, account2ID, amount int64) (fromAccount Account, toAccount Account, err error) {
 
 	if account1ID < account2ID {
 		// Update from Accounts' balance
