@@ -119,9 +119,9 @@ func TestCreateAccount(t *testing.T) {
 				Currency: account.Currency,
 				Balance:  0,
 			},
-			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
+			buildStubs: func(store *mockdb.MockStore, params db.CreateAcountParams) {
 				store.EXPECT().
-					CreateAcount(gomock.Any(), req).
+					CreateAcount(gomock.Any(), params).
 					Times(1).
 					Return(account, nil)
 			},
@@ -136,9 +136,9 @@ func TestCreateAccount(t *testing.T) {
 				Currency: account.Currency,
 				Balance:  0,
 			},
-			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
+			buildStubs: func(store *mockdb.MockStore, params db.CreateAcountParams) {
 				store.EXPECT().
-					CreateAcount(gomock.Any(), req).
+					CreateAcount(gomock.Any(), params).
 					Times(1).
 					Return(db.Account{}, sql.ErrConnDone)
 			},
@@ -152,7 +152,7 @@ func TestCreateAccount(t *testing.T) {
 				Currency: "xyz",
 				Balance:  0,
 			},
-			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
+			buildStubs: func(store *mockdb.MockStore, params db.CreateAcountParams) {
 				store.EXPECT().
 					CreateAcount(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -172,8 +172,12 @@ func TestCreateAccount(t *testing.T) {
 			server := NewServer(store)
 			tc.buildStubs(store, tc.req)
 			recorder := httptest.NewRecorder()
+			params := createAccountRequest{
+				Owner:    tc.req.Owner,
+				Currency: tc.req.Currency,
+			}
 			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(tc.req)
+			err := json.NewEncoder(&buf).Encode(params)
 			require.NoError(t, err)
 
 			request, err := http.NewRequest(http.MethodPost, "/accounts", &buf)
