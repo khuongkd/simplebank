@@ -121,7 +121,7 @@ func TestCreateAccount(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
 				store.EXPECT().
-					CreateAcount(gomock.Any(), gomock.Eq(req)).
+					CreateAcount(gomock.Any(), req).
 					Times(1).
 					Return(account, nil)
 			},
@@ -138,7 +138,7 @@ func TestCreateAccount(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore, req db.CreateAcountParams) {
 				store.EXPECT().
-					CreateAcount(gomock.Any(), gomock.Eq(req)).
+					CreateAcount(gomock.Any(), req).
 					Times(1).
 					Return(db.Account{}, sql.ErrConnDone)
 			},
